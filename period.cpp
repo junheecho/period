@@ -22,9 +22,8 @@ int period_backtracking(int d, std::vector<std::vector<int> > &p, std::vector<RE
     REAL v = 0;
     for (int i = 0; (unsigned) i < p.size(); i++) {
       REAL w = p[i][d];
-      for (int j = 0; j < d; j++) {
-        w *= (REAL) pow(x[j], p[i][j]);
-      }
+      for (int j = 0; j < d; j++)
+        w *= power(x[j], p[i][j]);
       v += w;
     }
     count = (v > 0 ? 1 : 0);
@@ -52,17 +51,11 @@ REAL period(int d, std::vector<std::vector<int> > p, std::vector<REAL> box_min, 
   for (int i = 0; i < d; i++)
     S *= box_max[i] - box_min[i];
 
-  static int m = 0;
-  if (!m) {
-    printf("compute m!\n");
-    m = S * k * (REAL) pow(2, d + n) + 1;
-    printf("m computed!!\n");
-  }
-  printf("%d\n", m);
+  int m = round(S * k * (REAL) power(2, d + n)) + 1;
 
   std::vector<REAL> x;
   int count = period_backtracking(d, p, box_min, box_max, m, x);
-  return count * S / (REAL) pow(m, d);
+  return count * S / power(m, d);
 }
 
 // pi : 3.141592...
@@ -78,7 +71,7 @@ void run_pi(int n) {
   std::vector<REAL> box_max = {  1,  1 };
   REAL pr = period(d, p, box_min, box_max, n);
   REAL error = pi() - pr;
-  bool pass = abs(error) < (REAL) pow(2, -n);
+  bool pass = abs(error) < power(2, -n);
 
   cout << (pass ? "PASS" : "FAIL");
   cout << " pi = " << pr << " " << error;
@@ -97,7 +90,7 @@ void run_log2(int n) {
   std::vector<REAL> box_max = { 2, 1 };
   REAL pr = period(d, p, box_min, box_max, n);
   REAL error = (REAL) log(2) - pr;
-  bool pass = abs(error) < (REAL) pow(2, -n);
+  bool pass = abs(error) < power(2, -n);
 
   cout << (pass ? "PASS" : "FAIL");
   cout << " log 2 = " << pr << " " << error;
@@ -105,7 +98,7 @@ void run_log2(int n) {
 }
 
 void compute() {
-  REAL n;
+  int n;
 
   cout << "Input n for precision 2^-n: ";
   cin >> n;
