@@ -1,0 +1,2 @@
+bin/period-rand data/$1.in $2 `cat data/$1.ans` > data/rand/$1-$2.out
+cat data/rand/$1-$2.out

@@ -1,0 +1,2 @@
+bin/period-det data/$1.in $2 `cat data/$1.ans` > data/det/$1-$2.out
+cat data/det/$1-$2.out
