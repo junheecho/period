@@ -1,81 +1,54 @@
 #include "iRRAM/core.h"
 #include "random.h"
+#include "semi-algebraic.h"
 
 #include <ctime>
 #include <vector>
 
-#define max(x, y) ((x) > (y) ? (x) : (y))
-
 using namespace iRRAM;
 
-struct  Monomial {
-  std::vector<int> exp;
-  int p, q;
-};
-
-struct Polynomial {
-  int nm;
-  std::vector<Monomial> term;
-};
-
-struct Semi_Algebraic {
-  int d, p, q, np;
-  std::vector<Polynomial> poly;
-};
+int RANDOM_POINTS = 1;
 
 /*
   Computes the period.
-
-  d: the dimension
-  p: the polynomial
-  n: the precision 2^-n
 */
-int period_backtracking(Semi_Algebraic const &set, int m, std::vector<REAL> &x) {
+int period_backtracking(Semi_Algebraic const &set, int m, std::vector<std::vector<REAL> > &x) {
   int count = 0;
-  int depth = x.size();
-  if (set.d == depth) {
-    int check = 1;
-    for (int k = 0; k < set.np; k++) {
-      REAL v = 0;
-      for (int i = 0; i < set.poly[k].nm; i++) {
-        REAL w = (REAL) set.poly[k].term[i].p / set.poly[k].term[i].q;
-        for (int j = 0; j < set.d; j++)
-          w *= power(x[j], set.poly[k].term[i].exp[j]);
-        v += w;
-      }
-      if (!(v > 0)) {
-        check = 0;
-        break;
-      }
+  unsigned int depth = x[0].size();
+  if (set.dimension() == depth) {
+    std::vector<LAZY_BOOLEAN> choice;
+    for (unsigned int j = 0; j < x.size(); j++) {
+      LAZY_BOOLEAN lzbl = true;
+      for (unsigned int i = 0; i < set.poly.size(); i++)
+        lzbl = lzbl && (set.poly[i]->apply(x[j]) > 0);
+      choice.push_back(lzbl);
+      choice.push_back(!lzbl);
     }
-    count += check;
+    if (choose(choice) & 1)
+      count++;
   } else {
-    REAL random = uniform_real();
-    REAL size = (REAL) 1 / m;
+    std::vector<REAL> random;
+    for (unsigned int j = 0; j < x.size(); j++)
+      random.push_back(uniform_real());
     for (int i = 0; i < m; i++) {
-      x.push_back((i + random) / m);
+      for (unsigned int j = 0; j < x.size(); j++)
+        x[j].push_back((i + random[j]) / m);
       count += period_backtracking(set, m, x);
-      x.pop_back();
+      for (unsigned int j = 0; j < x.size(); j++)
+        x[j].pop_back();
     }
   }
   return count;
 }
 REAL period(Semi_Algebraic const &set, int n){
-  int k = 0;
-  for (int l = 0; l < set.np; l++) {
-    for (int i = 0; i < set.poly[l].nm; i++) {
-      int deg = 0;
-      for (int j = 0; j < set.d; j++)
-        deg += set.poly[l].term[i].exp[j];
-      k = max(k, deg);
-    }
-  }
+  unsigned int d = set.dimension();
+  unsigned int k = set.degree();
 
-  int m = round(k * (REAL) power(2, set.d + n)) + 1;
+  int m = round((int) k * power(2, d + n)) + 1;
 
-  std::vector<REAL> x;
+  std::vector<std::vector<REAL> > x(RANDOM_POINTS);
   int count = period_backtracking(set, m, x);
-  return count / power(m, set.d) * set.p / set.q;
+  return count / power(m, d) * set.ratio;
 }
 
 int compute(Semi_Algebraic const &set, int const &n, char* const &answer) {
@@ -88,51 +61,27 @@ int compute(Semi_Algebraic const &set, int const &n, char* const &answer) {
   return 0;
 }
 
-int error(FILE *f) {
-  fclose(f);
-  fprintf(stderr, "wrong format\n");
-  return 1;
-}
-
 int main(int argc, char **argv) {
-  if (argc < 3) {
-    fprintf(stderr, "usage: period input_file prec [correct_value]\n");
+  if (argc < 4) {
+    fprintf(stderr, "usage: period input_file n_random_points prec [correct_value]\n");
     return 1;
   }
 
-  FILE *f = fopen(argv[1], "r");
-  if (f == NULL) {
-    fprintf(stderr, "cannot open the file\n");
-    return 1;
-  }
-
-  Semi_Algebraic set;
-  if (fscanf(f, "%d%d%d%d", &set.d, &set.p, &set.q, &set.np) != 4) return error(f);
-  for (int i = 0; i < set.np; i++) {
-    Polynomial p;
-    if (fscanf(f, "%d", &p.nm) != 1) return error(f);
-    for (int j = 0; j < p.nm; j++) {
-      Monomial m;
-      if (fscanf(f, "%d%d", &m.p, &m.q) != 2) return error(f);
-      m.exp.resize(set.d);
-      for (int k = 0; k < set.d; k++)
-        if (fscanf(f, "%d", &m.exp[k]) != 1) return error(f);
-      p.term.push_back(m);
-    }
-    set.poly.push_back(p);
-  }
-
-  fclose(f);
+  Semi_Algebraic set = semi_algebraic_from_file(argv[1]);
 
   int n;
-  if (sscanf(argv[2], "%d", &n) != 1) {
+  sscanf(argv[2], "%d", &RANDOM_POINTS);
+  if (sscanf(argv[3], "%d", &n) != 1) {
     fprintf(stderr, "wrong precision\n");
     return 1;
   }
-  char *answer = (argc < 4 ? NULL : argv[3]);
+  char *answer = (argc < 5 ? NULL : argv[4]);
 
   std::time_t started_at = time(NULL);
   iRRAM_initialize(argc, argv);
   iRRAM_exec<int, Semi_Algebraic, int, char*>(compute, set, n, answer);
   std::cout << "time: " << (time(NULL) - started_at) << " sec" << std::endl;
+
+  for (unsigned int i = 0; i < set.poly.size(); i++)
+    delete set.poly[i];
 }
