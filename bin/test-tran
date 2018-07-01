@@ -1,0 +1,4 @@
+if [ ! -s "data/tran/$1-$2.out" ]; then
+  bin/period-tran data/$1.in $2 `cat data/$1.ans 2> /dev/null` > data/tran/$1-$2.out
+fi
+cat data/tran/$1-$2.out

@@ -1,2 +1,4 @@
-bin/period-rand2 data/$1.in $2 $3 `cat data/$1.ans` > data/rand2/$1-$2-$3.out
+if [ ! -s "data/rand2/$1-$2-$3.out" ]; then
+  bin/period-rand2 data/$1.in $2 $3 `cat data/$1.ans 2> /dev/null` > data/rand2/$1-$2-$3.out
+fi
 cat data/rand2/$1-$2-$3.out

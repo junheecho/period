@@ -10,44 +10,41 @@ using namespace iRRAM;
 /*
   Computes the period.
 */
-void period_more_backtracking(Semi_Algebraic const &set, int m, std::vector<REAL> &x, unsigned int depth, std::vector<LAZY_BOOLEAN> &choice) {
-	if (set.dimension() == depth) {
-    LAZY_BOOLEAN lzbl = true;
-    for (unsigned int i = 0; i < set.poly.size(); i++)
-      lzbl = lzbl && (set.poly[i]->apply(x) > 0);
-    choice.push_back(lzbl);
-    choice.push_back(!lzbl);
-	} else {
-		REAL x0 = x[depth];
-    int k = set.max_degree();
-    REAL inc = (REAL) 1 / m / (k + 1);
-		for (int i = 0; i <= k; i++) {
-			period_more_backtracking(set, m, x, depth + 1, choice);
-			x[depth] += inc;
-		}
-		x[depth] = x0;
-	}
-}
-int period_backtracking(Semi_Algebraic const &set, int m, std::vector<REAL> &x) {
+int period_backtracking(Semi_Algebraic const &set, int m, std::vector<REAL> &x, std::vector<REAL> &tr) {
   int count = 0;
   unsigned int depth = x.size();
   if (set.dimension() == depth) {
-		std::vector<LAZY_BOOLEAN> choice;
-		period_more_backtracking(set, m, x, 0, choice);
-		if (choose(choice) & 1)
+    std::vector<REAL> xp;
+    for (unsigned int i = 0; i < x.size(); i++)
+      xp.push_back(x[i] + tr[i]);
+    LAZY_BOOLEAN lzbl = true;
+    for (unsigned int i = 0; i < set.poly.size(); i++)
+      lzbl = lzbl && (set.poly[i]->apply(xp) > 0);
+		if (lzbl)
       count++;
   } else {
     for (int i = 0; i < m; i++) {
       x.push_back((REAL) i / m);
-      count += period_backtracking(set, m, x);
+      count += period_backtracking(set, m, x, tr);
       x.pop_back();
     }
   }
   return count;
 }
-REAL period(Semi_Algebraic const &set, int n, int m) {
+REAL period(Semi_Algebraic const &set, int n, int m){
+  std::vector<int> p = {2, 3, 5, 7};
+  std::vector<REAL> tr;
+  REAL r = 2;
+  for (unsigned int i = 0; i < set.dimension(); i++) {
+    tr.push_back(exp(power(p[i], REAL(1) / 2)));
+    while (tr[i] > r)
+      r *= 2;
+  }
+  for (unsigned int i = 0; i < set.dimension(); i++)
+    tr[i] /= r * m;
+
   std::vector<REAL> x;
-  int count = period_backtracking(set, m, x);
+  int count = period_backtracking(set, m, x, tr);
   return count / power(m, set.dimension()) * set.ratio;
 }
 
