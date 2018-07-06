@@ -3,6 +3,8 @@ for n in $(seq 1 $2); do
   bin/test-det $1 $n
   echo "bin/test-tran $1 $n"
   bin/test-tran $1 $n
+  echo "bin/test-rational $1 $n"
+  bin/test-rational $1 $n
   for alg in rand; do
     for nrp in $(seq 1 1); do
       echo "bin/test-$alg $1 $nrp $n"

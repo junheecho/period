@@ -7,7 +7,12 @@
 #include <stack>
 #include <algorithm>
 
+#include <gmpxx.h>
+
 using namespace iRRAM;
+
+mpz_class mpz_pow(mpz_class base, unsigned int exp);
+mpq_class mpq_pow(mpq_class base, unsigned int exp);
 
 class Rational {
 private:
@@ -20,6 +25,9 @@ public:
   operator REAL() const {
     return (REAL) p / q;
   }
+  operator mpq_class() const {
+    return mpq_class(p, q);
+  }
 };
 
 class Polynomial {
@@ -29,6 +37,7 @@ public:
   virtual unsigned int degree() = 0;
   virtual unsigned int max_degree() = 0;
   virtual REAL apply(std::vector<REAL> x) = 0;
+  virtual mpq_class apply(std::vector<mpq_class> x) = 0;
 };
 
 template<typename T>
@@ -58,6 +67,13 @@ public:
       v *= power(x[i], exp[i]);
     return v;
   }
+
+  mpq_class apply(std::vector<mpq_class> x) {
+    mpq_class v = (mpq_class) coeff;
+    for (unsigned int i = 0; i < exp.size(); i++)
+      v *= mpq_pow(x[i], exp[i]);
+    return v;
+  }
 };
 
 template<typename T>
@@ -85,6 +101,13 @@ public:
 
   REAL apply(std::vector<REAL> x) {
     REAL v = 0;
+    for (unsigned int i = 0; i < terms.size(); i++)
+      v += terms[i].apply(x);
+    return v;
+  }
+
+  mpq_class apply(std::vector<mpq_class> x) {
+    mpq_class v = 0;
     for (unsigned int i = 0; i < terms.size(); i++)
       v += terms[i].apply(x);
     return v;
@@ -232,6 +255,32 @@ public:
           val.push(v1 / v2);
         } else if (rpn[i].op == POWER) {
           val.push(power(v1, v2));
+        }
+      }
+    }
+    return val.top();
+  }
+
+  mpq_class apply(std::vector<mpq_class> x) {
+    std::stack<mpq_class> val;
+    for (unsigned int i = 0; i < rpn.size(); i++) {
+      if (rpn[i].var) {
+        val.push(x[rpn[i].var->n]);
+      } else if (rpn[i].con) {
+        val.push(rpn[i].con->n);
+      } else {
+        mpq_class v2 = val.top(); val.pop();
+        mpq_class v1 = val.top(); val.pop();
+        if (rpn[i].op == PLUS) {
+          val.push(v1 + v2);
+        } else if (rpn[i].op == MINUS) {
+          val.push(v1 - v2);
+        } else if (rpn[i].op == TIMES) {
+          val.push(v1 * v2);
+        } else if (rpn[i].op == DIV) {
+          val.push(v1 / v2);
+        } else if (rpn[i].op == POWER) {
+          val.push(mpq_pow(v1, v2.get_num().get_ui()));
         }
       }
     }

@@ -6,6 +6,24 @@
 
 #define MAX_BUF 20
 
+template<typename T>
+T mp_pow(T q, unsigned int exp) {
+  T p = 1;
+  for (unsigned int e = 1; e <= exp; e <<= 1) {
+    if (e & exp)
+      p *= q;
+    q *= q;
+  }
+  return p;
+}
+
+mpz_class mpz_pow(mpz_class base, unsigned int exp) {
+  return mp_pow<mpz_class>(base, exp);
+}
+mpq_class mpq_pow(mpq_class base, unsigned int exp) {
+  return mp_pow<mpq_class>(base, exp);
+}
+
 Polynomial::~Polynomial() {}
 
 std::invalid_argument exc("invalid input");

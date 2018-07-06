@@ -15,7 +15,9 @@ int compute_N(Semi_Algebraic set, int n) {
   unsigned int k = set.max_degree();
   unsigned int K = set.degree();
 
-  if (d == 2) {
+  if (d == 1) {
+    return k;
+  } else if (d == 2) {
     int l, r, m;
     for (r = 2; !cmp_2(r, n, k); r <<= 1);
     l = r >> 1;

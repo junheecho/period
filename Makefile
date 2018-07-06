@@ -26,13 +26,17 @@ bin/period-det:
 bin/period-tran:
 	g++ --std=c++11 -g -O2 -Wall -I/usr/local/include -Xlinker -rpath -Xlinker /usr/local/lib  src/period-tran.cpp src/semi-algebraic.cpp  -L/usr/local/lib -liRRAM -lmpfr -lm -lgmp -lpthread -o bin/period-tran
 
+bin/period-rational:
+	g++ --std=c++11 -g -O2 -Wall -I/usr/local/include -Xlinker -rpath -Xlinker /usr/local/lib  src/period-rational.cpp src/semi-algebraic.cpp  -L/usr/local/lib -liRRAM -lmpfr -lm -lgmp -lpthread -o bin/period-rational
+
 bin/ref-pi:
 	g++ --std=c++11 -g -O2 -Wall -I/usr/local/include -Xlinker -rpath -Xlinker /usr/local/lib  src/ref-pi.cpp  -L/usr/local/lib -liRRAM -lmpfr -lm -lgmp -lpthread -o bin/ref-pi
 
 bin/ref-ln2:
 	g++ --std=c++11 -g -O2 -Wall -I/usr/local/include -Xlinker -rpath -Xlinker /usr/local/lib  src/ref-ln2.cpp  -L/usr/local/lib -liRRAM -lmpfr -lm -lgmp -lpthread -o bin/ref-ln2
 
-all: bin/period-rand bin/period-rand2 bin/period-det bin/period-tran bin/ref-pi bin/ref-ln2
+#all: bin/period-rand bin/period-rand2 bin/period-det bin/period-tran bin/period-rational bin/ref-pi bin/ref-ln2
+all: bin/period-rational bin/ref-pi bin/ref-ln2
 
 clean:
-	rm -rf bin/period-rand bin/period-rand2 bin/period-det bin/period-tran bin/ref-pi bin/ref-ln2
+	rm -rf bin/period-rand bin/period-rand2 bin/period-det bin/period-tran bin/period-rational bin/ref-pi bin/ref-ln2
